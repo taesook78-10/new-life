@@ -1,4 +1,4 @@
-const CACHE = "habit-table-v3";
+const CACHE = "habit-table-v6"; // cache bump to avoid stale
 const ASSETS = [
   "./",
   "./index.html",

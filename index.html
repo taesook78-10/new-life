@@ -14,6 +14,7 @@
     .app{max-width:1000px; margin:0 auto; padding:24px}
     .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px}
     h1{margin:0}
+    .version{color:#64748b; font-size:12px}
     .btn{appearance:none; border:1px solid #cbd5e1; background:#fff; color:#1e3a8a; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer}
     .btn.primary{background:var(--pri); color:var(--pri-ink); border-color:transparent}
     .toolbar{display:flex; gap:8px; align-items:center; margin:12px 0 16px}
@@ -30,7 +31,7 @@
     dialog{border:1px solid var(--line); border-radius:14px; padding:16px; max-width:420px}
     /* Actions row styles */ 
     .actions-row td{background:#f3f6ff; border-top:0}
-    .actions{display:flex; justify-content:flex-end; gap:8px; padding:8px 0}
+    .actions{display:flex; justify-content:flex-end; gap:8px; padding:8px 0; flex-wrap:wrap}
     .actions .btn{font-size:12px; padding:6px 10px}
   </style>
 </head>
@@ -38,6 +39,7 @@
   <div class="app">
     <div class="topbar">
       <h1>바른 습관 만들기</h1>
+      <div class="version">v0.6 (actions below)</div>
       <button id="btnInstall" class="btn">앱 설치</button>
     </div>
 
@@ -84,7 +86,7 @@
 
   <script>
     const $ = (s)=>document.querySelector(s);
-    const KEY='habits.table.v5';
+    const KEY='habits.table.v6'; // bump key to avoid stale local data confusion
     const store={ _data:[], load(){ const raw=localStorage.getItem(KEY); if(raw) this._data=JSON.parse(raw); }, save(){ localStorage.setItem(KEY, JSON.stringify(this._data)); } };
     store.load();
 
@@ -115,8 +117,8 @@
         const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=7; td.className='empty'; td.innerHTML='아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.'; tr.appendChild(td); body.appendChild(tr); return;
       }
       store._data.forEach((h,idx)=> {
-        const main = mainRow(h, idx);
-        const actions = actionRow(idx);
+        const main = mainRow(h, idx);     // <-- main row: NO actions cell
+        const actions = actionRow(idx);   // <-- separate actions row
         body.appendChild(main);
         body.appendChild(actions);
       });
@@ -126,7 +128,7 @@
       const tr=document.createElement('tr');
       const tdName=document.createElement('td'); tdName.className='name'; tdName.textContent=h.name; tr.appendChild(tdName);
       const tdD=document.createElement('td'); tdD.className='dday'; tdD.textContent=dday(h.startDate); tr.appendChild(tdD);
-      for(let i=0;i<5;i++){
+      for(let i=0;i<5){
         const td=document.createElement('td'); td.className='center';
         const cb=document.createElement('input'); cb.type='checkbox';
         if(!h.days) h.days={}; cb.checked=!!h.days[i];
