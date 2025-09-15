@@ -28,7 +28,9 @@
     .empty{padding:18px; text-align:center; color:var(--muted)}
     input[type="date"], input[type="text"]{width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--line)}
     dialog{border:1px solid var(--line); border-radius:14px; padding:16px; max-width:420px}
-    .actions{display:flex; flex-direction:row; gap:4px; flex-wrap:wrap; justify-content:center}
+    /* Actions row styles */ 
+    .actions-row td{background:#f3f6ff; border-top:0}
+    .actions{display:flex; justify-content:flex-end; gap:8px; padding:8px 0}
     .actions .btn{font-size:12px; padding:6px 10px}
   </style>
 </head>
@@ -47,18 +49,17 @@
       <table aria-label="바른행동습관 주중 체크 표">
         <thead>
           <tr>
-            <th style="width:36%">바른행동습관</th>
+            <th style="width:40%">바른행동습관</th>
             <th style="width:12%">D-day</th>
-            <th class="center" style="width:10%">월</th>
-            <th class="center" style="width:10%">화</th>
-            <th class="center" style="width:10%">수</th>
-            <th class="center" style="width:10%">목</th>
-            <th class="center" style="width:10%">금</th>
-            <th style="width:16%">작업</th>
+            <th class="center" style="width:9%">월</th>
+            <th class="center" style="width:9%">화</th>
+            <th class="center" style="width:9%">수</th>
+            <th class="center" style="width:9%">목</th>
+            <th class="center" style="width:12%">금</th>
           </tr>
         </thead>
         <tbody id="habitTbody">
-          <tr id="emptyRow"><td class="empty" colspan="8">아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.</td></tr>
+          <tr id="emptyRow"><td class="empty" colspan="7">아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.</td></tr>
         </tbody>
       </table>
     </div>
@@ -83,10 +84,9 @@
 
   <script>
     const $ = (s)=>document.querySelector(s);
-    const KEY='habits.table.v4'; // keep same key
+    const KEY='habits.table.v5';
     const store={ _data:[], load(){ const raw=localStorage.getItem(KEY); if(raw) this._data=JSON.parse(raw); }, save(){ localStorage.setItem(KEY, JSON.stringify(this._data)); } };
     store.load();
-    console.log('Loaded items:', store._data.length);
 
     // PWA install flow
     let deferredPrompt = null;
@@ -96,15 +96,13 @@
       e.preventDefault();
       deferredPrompt = e;
       if (installBtn) installBtn.style.display = 'inline-block';
-      console.log('beforeinstallprompt ready');
     });
     installBtn?.addEventListener('click', async () => {
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
+      await deferredPrompt.userChoice;
       deferredPrompt = null;
       installBtn.style.display = 'none';
-      console.log('Install choice:', choice.outcome);
     });
     window.addEventListener('appinstalled', () => { if (installBtn) installBtn.style.display = 'none'; });
 
@@ -114,13 +112,17 @@
     function render(){
       const body=$('#habitTbody'); body.innerHTML='';
       if(!store._data.length){
-        const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=8; td.className='empty'; td.innerHTML='아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.'; tr.appendChild(td); body.appendChild(tr); return;
+        const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=7; td.className='empty'; td.innerHTML='아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.'; tr.appendChild(td); body.appendChild(tr); return;
       }
-      store._data.forEach((h,idx)=> body.appendChild(row(h, idx)) );
-      console.log('Rendered rows:', store._data.length);
+      store._data.forEach((h,idx)=> {
+        const main = mainRow(h, idx);
+        const actions = actionRow(idx);
+        body.appendChild(main);
+        body.appendChild(actions);
+      });
     }
 
-    function row(h, idx){
+    function mainRow(h, idx){
       const tr=document.createElement('tr');
       const tdName=document.createElement('td'); tdName.className='name'; tdName.textContent=h.name; tr.appendChild(tdName);
       const tdD=document.createElement('td'); tdD.className='dday'; tdD.textContent=dday(h.startDate); tr.appendChild(tdD);
@@ -131,12 +133,18 @@
         cb.addEventListener('change',()=>{ h.days[i]=cb.checked; store.save(); });
         td.appendChild(cb); tr.appendChild(td);
       }
-      const tdAct=document.createElement('td'); const wrap=document.createElement('div'); wrap.className='actions';
+      return tr;
+    }
+
+    function actionRow(idx){
+      const tr=document.createElement('tr'); tr.className='actions-row';
+      const td=document.createElement('td'); td.colSpan=7;
+      const wrap=document.createElement('div'); wrap.className='actions';
       const bEdit=btn('편집',()=> editHabit(idx));
       const bDel=btn('삭제',()=> delHabit(idx));
       const bStart=btn('시작일 변경',()=> changeStart(idx));
       const bReset=btn('초기화',()=> resetStart(idx));
-      wrap.append(bEdit,bDel,bStart,bReset); tdAct.appendChild(wrap); tr.appendChild(tdAct);
+      wrap.append(bEdit,bDel,bStart,bReset); td.appendChild(wrap); tr.appendChild(td);
       return tr;
     }
 
@@ -150,13 +158,10 @@
     // Add habit dialog open
     $('#btnAdd').addEventListener('click', ()=>{
       if (!$('#habitDialog')?.showModal) {
-        // Fallback: prompt flow
-        const name = prompt('습관 이름을 입력하세요');
-        if (!name) return;
+        const name = prompt('습관 이름을 입력하세요'); if (!name) return;
         const start = prompt('시작일(YYYY-MM-DD), 비워두면 오늘', isoToday()) || isoToday();
         store._data.push({ id: crypto.randomUUID(), name: name.trim(), startDate: start, days:{} });
-        store.save(); render();
-        return;
+        store.save(); render(); return;
       }
       $('#dlgTitle').textContent='바른습관 추가';
       $('#fName').value='';
@@ -164,24 +169,16 @@
       $('#habitDialog').showModal();
     });
 
-    // Cancel button closes dialog with 'cancel'
-    $('#btnCancel').addEventListener('click', ()=>{
-      const dlg = $('#habitDialog');
-      if (dlg && dlg.close) dlg.close('cancel');
-    });
+    $('#btnCancel').addEventListener('click', ()=>{ const dlg=$('#habitDialog'); dlg?.close && dlg.close('cancel'); });
 
-    // Handle dialog close (ok / cancel)
     $('#habitDialog').addEventListener('close', ()=>{
-      const dlg = $('#habitDialog');
-      console.log('Dialog closed with:', dlg.returnValue);
-      if(dlg.returnValue!=='ok') return;
-      const name=$('#fName').value.trim(); if(!name){ console.warn('Empty name'); return; }
+      const dlg=$('#habitDialog'); if(dlg.returnValue!=='ok') return;
+      const name=$('#fName').value.trim(); if(!name) return;
       const start = $('#fStart').value || isoToday();
       store._data.push({ id: crypto.randomUUID(), name, startDate: start, days:{} });
       store.save(); render();
     });
 
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
     }
