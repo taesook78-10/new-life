@@ -74,17 +74,18 @@
         <input id="fStart" type="date" />
       </label>
       <div style="display:flex; gap:8px; margin-top:14px">
-        <button class="btn primary" value="ok">저장</button>
-        <button class="btn" value="cancel">취소</button>
+        <button type="submit" class="btn primary" value="ok">저장</button>
+        <button type="button" class="btn" id="btnCancel">취소</button>
       </div>
     </form>
   </dialog>
 
   <script>
     const $ = (s)=>document.querySelector(s);
-    const KEY='habits.table.v4';
+    const KEY='habits.table.v4'; // keep same key
     const store={ _data:[], load(){ const raw=localStorage.getItem(KEY); if(raw) this._data=JSON.parse(raw); }, save(){ localStorage.setItem(KEY, JSON.stringify(this._data)); } };
     store.load();
+    console.log('Loaded items:', store._data.length);
 
     // PWA install flow
     let deferredPrompt = null;
@@ -94,6 +95,7 @@
       e.preventDefault();
       deferredPrompt = e;
       if (installBtn) installBtn.style.display = 'inline-block';
+      console.log('beforeinstallprompt ready');
     });
     installBtn?.addEventListener('click', async () => {
       if (!deferredPrompt) return;
@@ -103,11 +105,7 @@
       installBtn.style.display = 'none';
       console.log('Install choice:', choice.outcome);
     });
-
-    // Detect if already installed (hide button)
-    window.addEventListener('appinstalled', () => {
-      if (installBtn) installBtn.style.display = 'none';
-    });
+    window.addEventListener('appinstalled', () => { if (installBtn) installBtn.style.display = 'none'; });
 
     function isoToday(){ return new Date().toISOString().slice(0,10); }
     function dday(startIso){ if(!startIso) return 'day:1'; const a=new Date(startIso); const b=new Date(); a.setHours(0,0,0,0); b.setHours(0,0,0,0); const diff=Math.floor((b-a)/86400000)+1; return 'day:'+diff; }
@@ -118,15 +116,13 @@
         const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=8; td.className='empty'; td.innerHTML='아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.'; tr.appendChild(td); body.appendChild(tr); return;
       }
       store._data.forEach((h,idx)=> body.appendChild(row(h, idx)) );
+      console.log('Rendered rows:', store._data.length);
     }
 
     function row(h, idx){
       const tr=document.createElement('tr');
-      // 이름
       const tdName=document.createElement('td'); tdName.className='name'; tdName.textContent=h.name; tr.appendChild(tdName);
-      // D-day
       const tdD=document.createElement('td'); tdD.className='dday'; tdD.textContent=dday(h.startDate); tr.appendChild(tdD);
-      // 월~금 체크
       for(let i=0;i<5;i++){
         const td=document.createElement('td'); td.className='center';
         const cb=document.createElement('input'); cb.type='checkbox';
@@ -134,36 +130,51 @@
         cb.addEventListener('change',()=>{ h.days[i]=cb.checked; store.save(); });
         td.appendChild(cb); tr.appendChild(td);
       }
-      // 작업 버튼들
       const tdAct=document.createElement('td'); const wrap=document.createElement('div'); wrap.className='actions';
       const bEdit=btn('편집',()=> editHabit(idx));
       const bDel=btn('삭제',()=> delHabit(idx));
       const bStart=btn('시작일 변경',()=> changeStart(idx));
       const bReset=btn('초기화',()=> resetStart(idx));
       wrap.append(bEdit,bDel,bStart,bReset); tdAct.appendChild(wrap); tr.appendChild(tdAct);
-
       return tr;
     }
 
     function btn(label, on){ const b=document.createElement('button'); b.type='button'; b.className='btn'; b.textContent=label; b.addEventListener('click', on); return b; }
 
-    // 편집/삭제/시작일 관련
     function editHabit(i){ const h=store._data[i]; const name=prompt('새 이름을 입력하세요', h.name||''); if(name&&name.trim()){ h.name=name.trim(); store.save(); render(); } }
     function delHabit(i){ const h=store._data[i]; if(confirm(`정말 삭제할까요? ( ${h.name} )`)){ store._data.splice(i,1); store.save(); render(); } }
     function changeStart(i){ const h=store._data[i]; const val=prompt('시작일(YYYY-MM-DD)을 입력하세요', h.startDate||isoToday()); if(val){ h.startDate=val; store.save(); render(); } }
     function resetStart(i){ const h=store._data[i]; h.startDate=isoToday(); store.save(); render(); }
 
-    // Add habit dialog
+    // Add habit dialog open
     $('#btnAdd').addEventListener('click', ()=>{
+      if (!$('#habitDialog')?.showModal) {
+        // Fallback: prompt flow
+        const name = prompt('습관 이름을 입력하세요');
+        if (!name) return;
+        const start = prompt('시작일(YYYY-MM-DD), 비워두면 오늘', isoToday()) || isoToday();
+        store._data.push({ id: crypto.randomUUID(), name: name.trim(), startDate: start, days:{} });
+        store.save(); render();
+        return;
+      }
       $('#dlgTitle').textContent='바른습관 추가';
       $('#fName').value='';
       $('#fStart').value = isoToday();
-      if($('#habitDialog')?.showModal){ $('#habitDialog').showModal(); } else { alert('이 브라우저는 모달을 지원하지 않습니다.'); }
+      $('#habitDialog').showModal();
     });
 
+    // Cancel button closes dialog with 'cancel'
+    $('#btnCancel').addEventListener('click', ()=>{
+      const dlg = $('#habitDialog');
+      if (dlg && dlg.close) dlg.close('cancel');
+    });
+
+    // Handle dialog close (ok / cancel)
     $('#habitDialog').addEventListener('close', ()=>{
-      if($('#habitDialog').returnValue!=='ok') return;
-      const name=$('#fName').value.trim(); if(!name) return;
+      const dlg = $('#habitDialog');
+      console.log('Dialog closed with:', dlg.returnValue);
+      if(dlg.returnValue!=='ok') return;
+      const name=$('#fName').value.trim(); if(!name){ console.warn('Empty name'); return; }
       const start = $('#fStart').value || isoToday();
       store._data.push({ id: crypto.randomUUID(), name, startDate: start, days:{} });
       store.save(); render();
