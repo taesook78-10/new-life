@@ -158,11 +158,11 @@
       $('#dlgTitle').textContent='바른습관 추가';
       $('#fName').value='';
       $('#fStart').value = isoToday();
-      $('#habitDialog').showModal();
+      if($('#habitDialog')?.showModal){ $('#habitDialog').showModal(); } else { alert('이 브라우저는 모달을 지원하지 않습니다.'); }
     });
 
-    $('#habitForm').addEventListener('close', ()=>{
-      if($('#habitForm').returnValue!=='ok') return;
+    $('#habitDialog').addEventListener('close', ()=>{
+      if($('#habitDialog').returnValue!=='ok') return;
       const name=$('#fName').value.trim(); if(!name) return;
       const start = $('#fStart').value || isoToday();
       store._data.push({ id: crypto.randomUUID(), name, startDate: start, days:{} });
