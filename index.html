@@ -28,7 +28,8 @@
     .empty{padding:18px; text-align:center; color:var(--muted)}
     input[type="date"], input[type="text"]{width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--line)}
     dialog{border:1px solid var(--line); border-radius:14px; padding:16px; max-width:420px}
-    .actions{display:flex; gap:6px; flex-wrap:wrap}
+    .actions{display:flex; flex-direction:row; gap:4px; flex-wrap:wrap; justify-content:center}
+    .actions .btn{font-size:12px; padding:6px 10px}
   </style>
 </head>
 <body>
@@ -53,7 +54,7 @@
             <th class="center" style="width:10%">수</th>
             <th class="center" style="width:10%">목</th>
             <th class="center" style="width:10%">금</th>
-            <th style="width:12%">작업</th>
+            <th style="width:16%">작업</th>
           </tr>
         </thead>
         <tbody id="habitTbody">
