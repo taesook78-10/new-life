@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>바른 습관 만들기</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root{ --bg:#f8fafc; --ink:#0f172a; --muted:#475569; --card:#ffffff; --line:#cbd5e1; --pri:#2563eb; --pri-ink:#ffffff; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, sans-serif; background:var(--bg); color:var(--ink)}
+    .app{max-width:1000px; margin:0 auto; padding:24px}
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px}
+    h1{margin:0}
+    .btn{appearance:none; border:1px solid #cbd5e1; background:#fff; color:#1e3a8a; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer}
+    .btn.primary{background:var(--pri); color:var(--pri-ink); border-color:transparent}
+    .toolbar{display:flex; gap:8px; align-items:center; margin:12px 0 16px}
+    .tablewrap{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:0 8px 24px rgba(2,6,23,.06)}
+    table{width:100%; border-collapse:collapse}
+    th, td{border:1px solid var(--line)}
+    thead th{background:#eef2ff; color:#1e3a8a; font-weight:800; font-size:14px; padding:10px}
+    tbody td{padding:8px 10px; font-size:14px}
+    td.name{font-weight:700}
+    td.dday{white-space:nowrap}
+    td.center{text-align:center}
+    .empty{padding:18px; text-align:center; color:var(--muted)}
+    input[type="date"], input[type="text"]{width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--line)}
+    dialog{border:1px solid var(--line); border-radius:14px; padding:16px; max-width:420px}
+    .actions{display:flex; gap:6px; flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1>바른 습관 만들기</h1>
+      <button id="btnInstall" class="btn">앱 설치</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn primary" id="btnAdd">+ 바른습관 추가</button>
+    </div>
+
+    <div class="tablewrap">
+      <table aria-label="바른행동습관 주중 체크 표">
+        <thead>
+          <tr>
+            <th style="width:36%">바른행동습관</th>
+            <th style="width:12%">D-day</th>
+            <th class="center" style="width:10%">월</th>
+            <th class="center" style="width:10%">화</th>
+            <th class="center" style="width:10%">수</th>
+            <th class="center" style="width:10%">목</th>
+            <th class="center" style="width:10%">금</th>
+            <th style="width:12%">작업</th>
+          </tr>
+        </thead>
+        <tbody id="habitTbody">
+          <tr id="emptyRow"><td class="empty" colspan="8">아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <dialog id="habitDialog">
+    <form method="dialog" id="habitForm">
+      <h3 id="dlgTitle">바른습관 추가</h3>
+      <label>습관 이름
+        <input id="fName" type="text" required placeholder="예: 아침 물 1컵, 10분 독서" />
+      </label>
+      <div style="height:8px"></div>
+      <label>시작 날짜
+        <input id="fStart" type="date" />
+      </label>
+      <div style="display:flex; gap:8px; margin-top:14px">
+        <button class="btn primary" value="ok">저장</button>
+        <button class="btn" value="cancel">취소</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const KEY='habits.table.v4';
+    const store={ _data:[], load(){ const raw=localStorage.getItem(KEY); if(raw) this._data=JSON.parse(raw); }, save(){ localStorage.setItem(KEY, JSON.stringify(this._data)); } };
+    store.load();
+
+    // PWA install flow
+    let deferredPrompt = null;
+    const installBtn = $('#btnInstall');
+    if (installBtn) installBtn.style.display = 'none';
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.style.display = 'inline-block';
+    });
+    installBtn?.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+      console.log('Install choice:', choice.outcome);
+    });
+
+    // Detect if already installed (hide button)
+    window.addEventListener('appinstalled', () => {
+      if (installBtn) installBtn.style.display = 'none';
+    });
+
+    function isoToday(){ return new Date().toISOString().slice(0,10); }
+    function dday(startIso){ if(!startIso) return 'day:1'; const a=new Date(startIso); const b=new Date(); a.setHours(0,0,0,0); b.setHours(0,0,0,0); const diff=Math.floor((b-a)/86400000)+1; return 'day:'+diff; }
+
+    function render(){
+      const body=$('#habitTbody'); body.innerHTML='';
+      if(!store._data.length){
+        const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=8; td.className='empty'; td.innerHTML='아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.'; tr.appendChild(td); body.appendChild(tr); return;
+      }
+      store._data.forEach((h,idx)=> body.appendChild(row(h, idx)) );
+    }
+
+    function row(h, idx){
+      const tr=document.createElement('tr');
+      // 이름
+      const tdName=document.createElement('td'); tdName.className='name'; tdName.textContent=h.name; tr.appendChild(tdName);
+      // D-day
+      const tdD=document.createElement('td'); tdD.className='dday'; tdD.textContent=dday(h.startDate); tr.appendChild(tdD);
+      // 월~금 체크
+      for(let i=0;i<5;i++){
+        const td=document.createElement('td'); td.className='center';
+        const cb=document.createElement('input'); cb.type='checkbox';
+        if(!h.days) h.days={}; cb.checked=!!h.days[i];
+        cb.addEventListener('change',()=>{ h.days[i]=cb.checked; store.save(); });
+        td.appendChild(cb); tr.appendChild(td);
+      }
+      // 작업 버튼들
+      const tdAct=document.createElement('td'); const wrap=document.createElement('div'); wrap.className='actions';
+      const bEdit=btn('편집',()=> editHabit(idx));
+      const bDel=btn('삭제',()=> delHabit(idx));
+      const bStart=btn('시작일 변경',()=> changeStart(idx));
+      const bReset=btn('초기화',()=> resetStart(idx));
+      wrap.append(bEdit,bDel,bStart,bReset); tdAct.appendChild(wrap); tr.appendChild(tdAct);
+
+      return tr;
+    }
+
+    function btn(label, on){ const b=document.createElement('button'); b.type='button'; b.className='btn'; b.textContent=label; b.addEventListener('click', on); return b; }
+
+    // 편집/삭제/시작일 관련
+    function editHabit(i){ const h=store._data[i]; const name=prompt('새 이름을 입력하세요', h.name||''); if(name&&name.trim()){ h.name=name.trim(); store.save(); render(); } }
+    function delHabit(i){ const h=store._data[i]; if(confirm(`정말 삭제할까요? ( ${h.name} )`)){ store._data.splice(i,1); store.save(); render(); } }
+    function changeStart(i){ const h=store._data[i]; const val=prompt('시작일(YYYY-MM-DD)을 입력하세요', h.startDate||isoToday()); if(val){ h.startDate=val; store.save(); render(); } }
+    function resetStart(i){ const h=store._data[i]; h.startDate=isoToday(); store.save(); render(); }
+
+    // Add habit dialog
+    $('#btnAdd').addEventListener('click', ()=>{
+      $('#dlgTitle').textContent='바른습관 추가';
+      $('#fName').value='';
+      $('#fStart').value = isoToday();
+      $('#habitDialog').showModal();
+    });
+
+    $('#habitForm').addEventListener('close', ()=>{
+      if($('#habitForm').returnValue!=='ok') return;
+      const name=$('#fName').value.trim(); if(!name) return;
+      const start = $('#fStart').value || isoToday();
+      store._data.push({ id: crypto.randomUUID(), name, startDate: start, days:{} });
+      store.save(); render();
+    });
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+
+    render();
+  </script>
+</body>
+</html>
