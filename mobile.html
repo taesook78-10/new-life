@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>바른 습관 만들기</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root{ 
+      --bg:#f8fafc; 
+      --ink:#0f172a; 
+      --muted:#475569; 
+      --card:#ffffff; 
+      --line:#cbd5e1; 
+      --pri:#2563eb; 
+      --pri-ink:#ffffff; 
+      --touch-target: 44px; /* 최소 터치 타겟 크기 */
+    }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+      -webkit-touch-callout: none;
+    }
+    body{
+      margin:0; 
+      font-family:system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, sans-serif; 
+      background:var(--bg); 
+      color:var(--ink);
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    .app{
+      max-width:1000px; 
+      margin:0 auto; 
+      padding:16px;
+    }
+    @media (max-width: 768px) {
+      .app {
+        padding: 12px;
+      }
+    }
+    .topbar{
+      display:flex; 
+      align-items:center; 
+      justify-content:space-between; 
+      gap:12px; 
+      margin-bottom:8px;
+      flex-wrap: wrap;
+    }
+    h1{
+      margin:0;
+      font-size: 1.5rem;
+    }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.25rem;
+      }
+    }
+    .version{
+      color:#64748b; 
+      font-size:12px;
+      order: 3;
+      width: 100%;
+    }
+    @media (min-width: 768px) {
+      .version {
+        order: initial;
+        width: auto;
+      }
+    }
+    .btn{
+      appearance:none; 
+      border:1px solid #cbd5e1; 
+      background:#fff; 
+      color:#1e3a8a; 
+      padding:12px 16px; 
+      border-radius:10px; 
+      font-weight:700; 
+      cursor:pointer;
+      min-height: var(--touch-target);
+      min-width: var(--touch-target);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .btn:hover, .btn:focus {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .btn.primary{
+      background:var(--pri); 
+      color:var(--pri-ink); 
+      border-color:transparent;
+    }
+    .toolbar{
+      display:flex; 
+      gap:8px; 
+      align-items:center; 
+      margin:12px 0 16px;
+    }
+    .tablewrap{
+      background:var(--card); 
+      border:1px solid var(--line); 
+      border-radius:14px; 
+      overflow:hidden; 
+      box-shadow:0 8px 24px rgba(2,6,23,.06);
+      overflow-x: auto;
+    }
+    table{
+      width:100%; 
+      border-collapse:collapse;
+      min-width: 600px;
+    }
+    @media (max-width: 768px) {
+      table {
+        min-width: 500px;
+      }
+    }
+    th, td{
+      border:1px solid var(--line);
+    }
+    thead th{
+      background:#eef2ff; 
+      color:#1e3a8a; 
+      font-weight:800; 
+      font-size:14px; 
+      padding:12px 8px;
+      white-space: nowrap;
+    }
+    @media (max-width: 768px) {
+      thead th {
+        padding: 10px 6px;
+        font-size: 12px;
+      }
+    }
+    tbody td{
+      padding:12px 10px; 
+      font-size:14px;
+    }
+    @media (max-width: 768px) {
+      tbody td {
+        padding: 10px 8px;
+        font-size: 13px;
+      }
+    }
+    td.name{
+      font-weight:700;
+      max-width: 200px;
+      word-wrap: break-word;
+    }
+    td.dday{
+      white-space:nowrap;
+      font-weight: 600;
+      color: var(--pri);
+    }
+    td.center{
+      text-align:center;
+      padding: 8px;
+    }
+    .empty{
+      padding:24px; 
+      text-align:center; 
+      color:var(--muted);
+    }
+    @media (max-width: 768px) {
+      .empty {
+        padding: 16px;
+        font-size: 14px;
+      }
+    }
+    
+    /* 체크박스 스타일 개선 */
+    input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: var(--pri);
+      -webkit-appearance: none;
+      appearance: none;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      transition: all 0.2s ease;
+    }
+    
+    input[type="checkbox"]:checked {
+      background: var(--pri);
+      border-color: var(--pri);
+    }
+    
+    input[type="checkbox"]:checked::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    input[type="checkbox"]:hover, input[type="checkbox"]:focus {
+      border-color: var(--pri);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    input[type="date"], input[type="text"]{
+      width:100%; 
+      padding:12px; 
+      border-radius:8px; 
+      border:1px solid var(--line);
+      font-size: 16px; /* iOS 확대 방지 */
+      min-height: var(--touch-target);
+    }
+    
+    dialog{
+      border:1px solid var(--line); 
+      border-radius:14px; 
+      padding:20px; 
+      max-width:420px;
+      width: 90vw;
+      margin: auto;
+    }
+    
+    dialog form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    dialog label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-weight: 600;
+    }
+    
+    dialog .form-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    
+    @media (max-width: 480px) {
+      dialog .form-buttons {
+        flex-direction: column-reverse;
+      }
+      
+      dialog .form-buttons .btn {
+        width: 100%;
+      }
+    }
+
+    /* Actions row styles */ 
+    .actions-row td{
+      background:#f8fafc; 
+      border-top:2px solid var(--line);
+      padding: 4px 12px;
+    }
+    .actions{
+      display:flex; 
+      justify-content:flex-end; 
+      gap:8px; 
+      flex-wrap:wrap;
+      padding: 4px 0;
+    }
+    @media (max-width: 768px) {
+      .actions {
+        justify-content: center;
+      }
+    }
+    .actions .btn{
+      font-size:12px; 
+      padding:8px 12px;
+      min-height: 36px;
+    }
+    
+    /* 로딩 및 에러 상태 */
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+    }
+    
+    .error {
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 16px 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1>바른 습관 만들기</h1>
+      <button id="btnInstall" class="btn" style="display:none">앱 설치</button>
+      <div class="version">v0.7 (모바일 최적화)</div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn primary" id="btnAdd">+ 바른습관 추가</button>
+    </div>
+
+    <div class="tablewrap">
+      <table aria-label="바른행동습관 주중 체크 표">
+        <thead>
+          <tr>
+            <th style="width:35%">바른행동습관</th>
+            <th style="width:15%">D-day</th>
+            <th class="center" style="width:10%">월</th>
+            <th class="center" style="width:10%">화</th>
+            <th class="center" style="width:10%">수</th>
+            <th class="center" style="width:10%">목</th>
+            <th class="center" style="width:10%">금</th>
+          </tr>
+        </thead>
+        <tbody id="habitTbody">
+          <tr id="emptyRow">
+            <td class="empty" colspan="7">
+              아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <dialog id="habitDialog">
+    <form method="dialog" id="habitForm">
+      <h3 id="dlgTitle">바른습관 추가</h3>
+      <label>
+        습관 이름
+        <input id="fName" type="text" required placeholder="예: 아침 물 1컵, 10분 독서" />
+      </label>
+      <label>
+        시작 날짜
+        <input id="fStart" type="date" />
+      </label>
+      <div class="form-buttons">
+        <button type="button" class="btn" id="btnCancel">취소</button>
+        <button type="submit" class="btn primary" value="ok">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    // 유틸리티 함수들
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => document.querySelectorAll(s);
+    
+    // 디버깅을 위한 로그 함수
+    const log = (...args) => {
+      console.log('[HabitApp]', ...args);
+    };
+    
+    // 에러 처리 함수
+    const showError = (message) => {
+      log('Error:', message);
+      alert(`오류: ${message}`);
+    };
+    
+    // 터치 이벤트 처리를 위한 헬퍼
+    const addTouchHandler = (element, handler) => {
+      if (!element) return;
+      
+      // 마우스와 터치 이벤트 모두 처리
+      element.addEventListener('click', handler);
+      element.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        handler(e);
+      });
+    };
+
+    const KEY = 'habits.table.v7'; // 버전 업데이트
+    const store = { 
+      _data: [], 
+      load() { 
+        try {
+          const raw = localStorage.getItem(KEY); 
+          if (raw) this._data = JSON.parse(raw);
+          log('Data loaded:', this._data.length, 'habits');
+        } catch (e) {
+          log('Error loading data:', e);
+          this._data = [];
+        }
+      }, 
+      save() { 
+        try {
+          localStorage.setItem(KEY, JSON.stringify(this._data));
+          log('Data saved:', this._data.length, 'habits');
+        } catch (e) {
+          log('Error saving data:', e);
+          showError('데이터 저장에 실패했습니다.');
+        }
+      } 
+    };
+
+    // PWA 설치 관련
+    let deferredPrompt = null;
+    const installBtn = $('#btnInstall');
+    
+    if (installBtn) {
+      installBtn.style.display = 'none';
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        log('PWA install prompt available');
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'inline-flex';
+      });
+      
+      addTouchHandler(installBtn, async () => {
+        if (!deferredPrompt) {
+          log('No deferred prompt available');
+          return;
+        }
+        
+        try {
+          deferredPrompt.prompt();
+          const result = await deferredPrompt.userChoice;
+          log('PWA install result:', result);
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        } catch (e) {
+          log('PWA install error:', e);
+        }
+      });
+      
+      window.addEventListener('appinstalled', () => {
+        log('PWA installed successfully');
+        installBtn.style.display = 'none';
+      });
+    }
+
+    // 날짜 관련 함수들
+    function isoToday() { 
+      return new Date().toISOString().slice(0,10); 
+    }
+    
+    function dday(startIso) { 
+      if (!startIso) return 'day:1'; 
+      try {
+        const a = new Date(startIso); 
+        const b = new Date(); 
+        a.setHours(0,0,0,0); 
+        b.setHours(0,0,0,0); 
+        const diff = Math.floor((b - a) / 86400000) + 1; 
+        return 'day:' + diff;
+      } catch (e) {
+        log('Error calculating dday:', e);
+        return 'day:1';
+      }
+    }
+
+    // 메인 렌더링 함수
+    function render() {
+      log('Rendering habits');
+      const body = $('#habitTbody'); 
+      if (!body) {
+        showError('테이블 요소를 찾을 수 없습니다.');
+        return;
+      }
+      
+      body.innerHTML = '';
+      
+      if (!store._data.length) {
+        const tr = document.createElement('tr'); 
+        const td = document.createElement('td'); 
+        td.colSpan = 7; 
+        td.className = 'empty'; 
+        td.innerHTML = '아직 습관이 없습니다. 위의 <strong>+ 바른습관 추가</strong> 버튼으로 시작해 보세요.'; 
+        tr.appendChild(td); 
+        body.appendChild(tr); 
+        return;
+      }
+      
+      store._data.forEach((h, idx) => {
+        const main = mainRow(h, idx);
+        const actions = actionRow(idx);
+        body.appendChild(main);
+        body.appendChild(actions);
+      });
+    }
+
+    function mainRow(h, idx) {
+      const tr = document.createElement('tr');
+      
+      // 습관 이름
+      const tdName = document.createElement('td'); 
+      tdName.className = 'name'; 
+      tdName.textContent = h.name; 
+      tr.appendChild(tdName);
+      
+      // D-day
+      const tdD = document.createElement('td'); 
+      tdD.className = 'dday'; 
+      tdD.textContent = dday(h.startDate); 
+      tr.appendChild(tdD);
+      
+      // 요일별 체크박스 (월~금)
+      for (let i = 0; i < 5; i++) {
+        const td = document.createElement('td'); 
+        td.className = 'center';
+        
+        const cb = document.createElement('input'); 
+        cb.type = 'checkbox';
+        cb.setAttribute('aria-label', `${h.name} ${['월','화','수','목','금'][i]}요일`);
+        
+        if (!h.days) h.days = {}; 
+        cb.checked = !!h.days[i];
+        
+        // 체크박스 변경 이벤트
+        const handleCheck = (e) => {
+          log(`Checkbox changed: habit ${idx}, day ${i}, checked: ${cb.checked}`);
+          h.days[i] = cb.checked; 
+          store.save();
+        };
+        
+        cb.addEventListener('change', handleCheck);
+        // 터치 디바이스에서 추가적인 이벤트 처리
+        cb.addEventListener('touchend', (e) => {
+          // 기본 동작을 막지 않고 그대로 진행
+          setTimeout(() => {
+            if (h.days[i] !== cb.checked) {
+              h.days[i] = cb.checked;
+              store.save();
+            }
+          }, 100);
+        });
+        
+        td.appendChild(cb); 
+        tr.appendChild(td);
+      }
+      
+      return tr;
+    }
+
+    function actionRow(idx) {
+      const tr = document.createElement('tr'); 
+      tr.className = 'actions-row';
+      
+      const td = document.createElement('td'); 
+      td.colSpan = 7;
+      
+      const wrap = document.createElement('div'); 
+      wrap.className = 'actions';
+      
+      const bEdit = createActionButton('편집', () => editHabit(idx));
+      const bDel = createActionButton('삭제', () => delHabit(idx));
+      const bStart = createActionButton('시작일 변경', () => changeStart(idx));
+      const bReset = createActionButton('초기화', () => resetStart(idx));
+      
+      wrap.append(bEdit, bDel, bStart, bReset); 
+      td.appendChild(wrap); 
+      tr.appendChild(td);
+      
+      return tr;
+    }
+
+    function createActionButton(label, handler) {
+      const b = document.createElement('button'); 
+      b.type = 'button'; 
+      b.className = 'btn'; 
+      b.textContent = label;
+      addTouchHandler(b, handler);
+      return b;
+    }
+
+    // 습관 관리 함수들
+    function editHabit(i) { 
+      const h = store._data[i];
+      if (!h) {
+        showError('습관을 찾을 수 없습니다.');
+        return;
+      }
+      
+      const name = prompt('새 이름을 입력하세요', h.name || ''); 
+      if (name && name.trim()) { 
+        h.name = name.trim(); 
+        store.save(); 
+        render(); 
+      } 
+    }
+    
+    function delHabit(i) { 
+      const h = store._data[i];
+      if (!h) {
+        showError('습관을 찾을 수 없습니다.');
+        return;
+      }
+      
+      if (confirm(`정말 삭제할까요? ( ${h.name} )`)) { 
+        store._data.splice(i, 1); 
+        store.save(); 
+        render(); 
+      } 
+    }
+    
+    function changeStart(i) { 
+      const h = store._data[i];
+      if (!h) {
+        showError('습관을 찾을 수 없습니다.');
+        return;
+      }
+      
+      const val = prompt('시작일(YYYY-MM-DD)을 입력하세요', h.startDate || isoToday()); 
+      if (val && val.match(/^\d{4}-\d{2}-\d{2}$/)) { 
+        h.startDate = val; 
+        store.save(); 
+        render(); 
+      } else if (val) {
+        showError('올바른 날짜 형식(YYYY-MM-DD)을 입력하세요.');
+      }
+    }
+    
+    function resetStart(i) { 
+      const h = store._data[i];
+      if (!h) {
+        showError('습관을 찾을 수 없습니다.');
+        return;
+      }
+      
+      if (confirm('시작일을 오늘로 초기화할까요?')) {
+        h.startDate = isoToday(); 
+        store.save(); 
+        render();
+      }
+    }
+
+    // 다이얼로그 처리
+    const setupDialog = () => {
+      const dialog = $('#habitDialog');
+      const form = $('#habitForm');
+      const btnAdd = $('#btnAdd');
+      const btnCancel = $('#btnCancel');
+      
+      if (!dialog || !form || !btnAdd || !btnCancel) {
+        log('Dialog elements not found, using fallback');
+        return false;
+      }
+      
+      // 다이얼로그가 지원되는지 확인
+      if (typeof dialog.showModal !== 'function') {
+        log('Dialog not supported, using fallback');
+        return false;
+      }
+      
+      // 습관 추가 버튼
+      addTouchHandler(btnAdd, () => {
+        try {
+          $('#dlgTitle').textContent = '바른습관 추가';
+          $('#fName').value = '';
+          $('#fStart').value = isoToday();
+          dialog.showModal();
+        } catch (e) {
+          log('Error showing dialog:', e);
+          showFallbackDialog();
+        }
+      });
+      
+      // 취소 버튼
+      addTouchHandler(btnCancel, () => {
+        try {
+          dialog.close('cancel');
+        } catch (e) {
+          log('Error closing dialog:', e);
+        }
+      });
+      
+      // 폼 제출 처리
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        try {
+          dialog.close('ok');
+        } catch (err) {
+          log('Error closing dialog on submit:', err);
+          handleDialogSubmit();
+        }
+      });
+      
+      // 다이얼로그 닫힘 처리
+      dialog.addEventListener('close', () => {
+        if (dialog.returnValue !== 'ok') return;
+        handleDialogSubmit();
+      });
+      
+      return true;
+    };
+    
+    const handleDialogSubmit = () => {
+      const name = $('#fName')?.value.trim(); 
+      if (!name) {
+        showError('습관 이름을 입력하세요.');
+        return;
+      }
+      
+      const start = $('#fStart')?.value || isoToday();
+      
+      try {
+        const newHabit = { 
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(), 
+          name, 
+          startDate: start, 
+          days: {} 
+        };
+        
+        store._data.push(newHabit);
+        store.save(); 
+        render();
+        log('New habit added:', newHabit);
+      } catch (e) {
+        log('Error adding habit:', e);
+        showError('습관 추가에 실패했습니다.');
+      }
+    };
+    
+    // 다이얼로그 미지원시 폴백
+    const showFallbackDialog = () => {
+      const name = prompt('습관 이름을 입력하세요'); 
+      if (!name || !name.trim()) return;
+      
+      const start = prompt('시작일(YYYY-MM-DD), 비워두면 오늘', isoToday()) || isoToday();
+      
+      try {
+        store._data.push({ 
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(), 
+          name: name.trim(), 
+          startDate: start, 
+          days: {} 
+        });
+        store.save(); 
+        render();
+      } catch (e) {
+        showError('습관 추가에 실패했습니다.');
+      }
+    };
+
+    // 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => log('Service Worker registered'))
+          .catch(e => log('Service Worker registration failed:', e));
+      });
+    }
+
+    // 앱 초기화
+    const initApp = () => {
+      log('Initializing app');
+      
+      try {
+        store.load();
+        
+        // 다이얼로그 설정 시도
+        if (!setupDialog()) {
+          // 다이얼로그 미지원시 폴백 설정
+          const btnAdd = $('#btnAdd');
+          if (btnAdd) {
+            addTouchHandler(btnAdd, showFallbackDialog);
+          }
+        }
+        
+        render();
+        log('App initialized successfully');
+      } catch (e) {
+        log('Error initializing app:', e);
+        showError('앱 초기화에 실패했습니다.');
+      }
+    };
+
+    // DOM이 준비되면 초기화
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+    
+    // 페이지 가시성 변경시 데이터 새로고침
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        log('Page became visible, refreshing data');
+        store.load();
+        render();
+      }
+    });
+  </script>
+</body>
+</html>
